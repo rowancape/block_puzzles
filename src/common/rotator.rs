@@ -16,11 +16,12 @@ impl Rotator {
             previous_rotations: AHashSet::new()
         }
     }
-
+ 
     pub fn rotate_by_i(&mut self, i: usize) {
         if !self.previous_rotations.contains(&self.block) {
             self.previous_rotations.insert(self.block.clone());
         }
+
         self.axis_rot_state[i] = (self.axis_rot_state[i] + 1) % 4;
         let dimensions = self.block.dimensions();
 

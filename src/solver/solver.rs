@@ -28,6 +28,7 @@ impl Solver {
 
     pub fn solve(&mut self) -> Option<(Vec<Block>, Vec<Coordinate>)> {
         while self.rotators.last().unwrap().axis_rot_state != [3, 3, 3]  {
+    
             for block_combo in &self.working_rot_combos {
     
                 let start_coords_each_block = self.find_valid_start_coords(block_combo);
@@ -43,7 +44,6 @@ impl Solver {
                     }
                 }
             }
-
             self.compute_new_rotation();
         }
 
@@ -155,6 +155,11 @@ impl Solver {
         }
     }
 
+    /// Loops over the rotators and returns either:
+    /// - Some(i) with the index of the rotator that should be rotated next.
+    /// - None if every rotation of all rotators have been tried already (no more new rotations to try).
+    /// 
+    /// If a rotators axis_rot_state is at [3, 3, 3], that means every possible rotation has been tried already.
     fn which_block_to_rotate_next(&self) -> Option<usize> {
         for (i, rotator) in self.rotators.iter().enumerate() {
             if rotator.axis_rot_state == [3, 3, 3] {
@@ -168,18 +173,17 @@ impl Solver {
         None
     }
 
+
     fn rotate_block(&mut self, block_index: &usize) {
         let rotator = &mut self.rotators[*block_index];
 
         for i in 0..3 {
             if rotator.axis_rot_state[i] == 3 {
                 rotator.rotate_by_i(i);
-                rotator.axis_rot_state[i] = 0;
                 continue;
             }
             else {
                 rotator.rotate_by_i(i);
-                rotator.axis_rot_state[i] += 1;
                 break;
             }
         }

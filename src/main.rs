@@ -10,25 +10,56 @@ use std::time::Instant;
 fn main() {
     let start_time = Instant::now();
 
+    let mut multi_prod = (0..3).map(|i| (i * 2)..(i * 2 + 2));
+
     let field = Field::new(
-        vec![vec![vec![0, 0, 0, 0],  
-                    vec![0, 1, 0, 1],
-                    vec![0, 0, 0, 0],
-                    vec![0, 0, 1, 1]]; 3]);
+        vec![vec![vec![0, 0, 0, 1],  
+                        vec![1, 0, 0, 0],
+                        vec![0, 0, 0, 0]]; 2]);
+                    
+    let block1 = Block::new(
+        vec![vec![
+                vec![1, 1],  
+                vec![0, 1],
+                vec![0, 1]],
+            vec![
+                vec![0, 0],  
+                vec![0, 0],
+                vec![0, 1]]]);
 
-    let field2 = Field::new(vec![vec![vec![0; 3]; 3]; 3]);
+    let block2 = Block::new(
+        vec![vec![
+                vec![1, 1],  
+                vec![0, 1],
+                vec![1, 1]]]);
 
+    let block3 = Block::new(
+        vec![vec![
+                vec![0, 1],  
+                vec![1, 1],
+                vec![0, 1]],
+            vec![
+                vec![0, 1],  
+                vec![0, 0],
+                vec![0, 0]]]);
 
-    let mut generator = Generator::new(&field, 3, 4);
-    let blocks = generator.generate_blocks();
+    let block4 = Block::new(
+        vec![vec![
+                vec![1, 1],  
+                vec![1, 1]],
+            vec![
+                vec![0, 1],  
+                vec![0, 0]]]);
 
+    let blocks = vec![block1, block2, block3, block4];
+
+    // let mut generator = Generator::new(&field, 4, 5);
+    // let blocks = generator.generate_blocks();
 
     let mut solver = Solver::new(field, blocks);
 
     match solver.solve() {
-        Some(solution) => {
-            let blocks: BlockCombination = solution.0;
-            let coords: Vec<Coordinate> = solution.1;
+        Some((blocks, coords)) => {
 
             let mut field: Vec<Vec<Vec<&str>>> = solver.field
                 .iter()
