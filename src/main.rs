@@ -10,8 +10,6 @@ use std::time::Instant;
 fn main() {
     let start_time = Instant::now();
 
-    let mut multi_prod = (0..3).map(|i| (i * 2)..(i * 2 + 2));
-
     let field = Field::new(
         vec![vec![vec![0, 0, 0, 1],  
                         vec![1, 0, 0, 0],
@@ -84,10 +82,20 @@ fn main() {
 
             println!();
             println!();
-            println!("Took {:?} to compute.", start_time.elapsed())
+            println!("Took {:?} to compute.", start_time.elapsed());
+            println!();
+            println!("Number of block position combinations tested: {}", solver.start_coord_combos_tested);
+            println!();
+            println!("Number of block rotation state combinations tested: {}", solver.rotational_combinations_tested);
         }
         None => {
-            println!("Something has gone awry!")
+            println!("No solution found!");
+            println!();
+            println!("Took {:?} to go through all possible arrangments.", start_time.elapsed());
+            println!();
+            println!("Number of block position combinations tested: {}", solver.start_coord_combos_tested);
+            println!();
+            println!("Number of block rotation state combinations tested: {}", solver.rotational_combinations_tested);
         }
     }
 }
