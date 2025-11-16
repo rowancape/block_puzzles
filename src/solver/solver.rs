@@ -51,12 +51,10 @@ impl Solver {
     /// At five or more blocks getting to return None may take hours or days assuming none of the blocks are 
     ///   rotationally homogenous (like a perfect cube).
     /// 
-    /// To improve this in any significant manner one would have to come up with a linear, non-exhaustive, non-brute-force
-    ///   algorithm to test whether any number of blocks can be used to solve the puzzle at any rotational state
-    ///   without checking every possible rotation state combination between the different blocks.
+    /// This can be improved significantly, but no polynomial-time algorithm for a general solution is currently known,
+    ///   since the problem is NP-complete.
     /// 
-    /// A quick intelligent mathematical way to check if some blocks can possibly ever come to a solution would already
-    ///   make the handing out of a None much quicker, at least in some circumstances.
+    /// The fastest method would be using a method called "dancing links" and an algorithm called "algorithm x"
     pub fn solve(&mut self) -> Option<(Vec<Block>, Vec<Coordinate>)> {
         while self.rotators.last().unwrap().axis_rot_state != [3, 3, 3]  {
     
@@ -113,7 +111,7 @@ impl Solver {
         let mut single_block_coords: Vec<Coordinate> = Vec::new();
 
         let field_dimensions = self.field.dimensions();
-        let block_dimensions = block.dimensions();
+        let block_dimensions = block.dimensions;
             
         for z in 0..field_dimensions.z {
             // If block can't fit in the z axis, break.

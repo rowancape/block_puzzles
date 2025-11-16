@@ -10,6 +10,7 @@ pub struct Generator {
     starting_field_ones: usize
 }
 
+#[allow(dead_code)]
 impl Generator {
     pub fn new(field: &Field, num_of_blocks: usize, min_block_size: usize) -> Self {
         let starting_field_ones = Self::count_field_ones(&field);

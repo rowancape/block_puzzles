@@ -4,7 +4,10 @@ use super::types::*;
 use crate::Coordinate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct Block(pub Vec<Coordinate>);
+pub struct Block {
+    pub body: Vec<Coordinate>,
+    pub dimensions: Coordinate
+}
 
 impl Block {
     pub fn new(grid: Grid) -> Self {
@@ -41,21 +44,20 @@ impl Block {
             }
         }
 
-        Self(coordinates)
-    }
-
-    pub fn dimensions(&self) -> Coordinate {
         let mut x_max = 0;
         let mut y_max = 0;
         let mut z_max = 0;
 
-        for coord in &self.0 {
+        for coord in &coordinates {
             if coord.x > x_max { x_max = coord.x }
             if coord.y > y_max { y_max = coord.y }
             if coord.z > z_max { z_max = coord.z }
         }
 
-        Coordinate::new(x_max, y_max, z_max)
+        Self { 
+            body: coordinates,
+            dimensions: Coordinate::new(x_max, y_max, z_max)
+        }
     }
 
     pub fn print(&self) {
@@ -66,12 +68,12 @@ impl Block {
 impl Deref for Block {
     type Target = Vec<Coordinate>;
     fn deref(&self) -> &Self::Target {
-        &self.0
+        &self.body
     }
 }
 
 impl DerefMut for Block {
     fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+        &mut self.body
     }
 }

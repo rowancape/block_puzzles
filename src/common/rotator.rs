@@ -23,7 +23,7 @@ impl Rotator {
         }
 
         self.axis_rot_state[i] = (self.axis_rot_state[i] + 1) % 4;
-        let dimensions = self.block.dimensions();
+        let dimensions = self.block.dimensions;
 
         match i {
             0 => { self.rotate_x(dimensions); }
@@ -34,29 +34,47 @@ impl Rotator {
     }
 
     fn rotate_x(&mut self, max: Coordinate) {
-        for coord in &mut self.block.0 {
+        for coord in &mut self.block.body {
             let y = coord.y;
 
             coord.y = coord.z;
             coord.z = max.y - y;
         }
+
+        if self.block.dimensions.y != self.block.dimensions.z {
+            let temp = self.block.dimensions.y;
+            self.block.dimensions.y = self.block.dimensions.z;
+            self.block.dimensions.z = temp; 
+        }
     }
 
     fn rotate_y(&mut self, max: Coordinate) {
-        for coord in &mut self.block.0 {
+        for coord in &mut self.block.body {
             let x = coord.x;
 
             coord.x = coord.z;
             coord.z = max.x - x;
         }
+
+        if self.block.dimensions.x != self.block.dimensions.z {
+            let temp = self.block.dimensions.x;
+            self.block.dimensions.x = self.block.dimensions.z;
+            self.block.dimensions.z = temp; 
+        }
     }
 
     fn rotate_z(&mut self, max: Coordinate) {
-        for coord in &mut self.block.0 {
+        for coord in &mut self.block.body {
             let x = coord.x;
 
             coord.x = coord.y;
             coord.y = max.x - x;
+        }
+
+        if self.block.dimensions.y != self.block.dimensions.x {
+            let temp = self.block.dimensions.y;
+            self.block.dimensions.y = self.block.dimensions.x;
+            self.block.dimensions.x = temp; 
         }
     }
 }
