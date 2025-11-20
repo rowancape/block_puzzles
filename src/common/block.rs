@@ -32,6 +32,10 @@ impl Block {
             }
         }
 
+        let x_max = grid[0][0].len();
+        let y_max = grid[0].len();
+        let z_max = grid.len();
+
         let mut coordinates: Vec<Coordinate> = Vec::new();
 
         for (z, layer) in grid.iter().enumerate() {
@@ -42,16 +46,6 @@ impl Block {
                     }
                 }
             }
-        }
-
-        let mut x_max = 0;
-        let mut y_max = 0;
-        let mut z_max = 0;
-
-        for coord in &coordinates {
-            if coord.x > x_max { x_max = coord.x }
-            if coord.y > y_max { y_max = coord.y }
-            if coord.z > z_max { z_max = coord.z }
         }
 
         Self { 
@@ -75,5 +69,34 @@ impl Deref for Block {
 impl DerefMut for Block {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.body
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_block_coords() {
+        let block = Block::new(vec![vec![
+            vec![0, 1],
+            vec![1, 1]],vec![
+            vec![0, 0],
+            vec![0, 1]]]
+        );
+
+        let expected_body = vec![
+            Coordinate::new(1, 0, 0),
+            Coordinate::new(0, 1, 0),
+            Coordinate::new(1, 1, 0),
+            Coordinate::new(1, 1, 1),
+        ];
+
+        assert_eq!(block.body.len(), expected_body.len());
+
+        for coord in expected_body {
+            assert!(block.body.contains(&coord));
+        }
     }
 }

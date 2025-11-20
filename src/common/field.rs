@@ -76,6 +76,18 @@ impl Field {
         }
     }
 
+    pub fn get_n_field_zeros(&self) -> usize {
+        let mut n_zeros = 0;
+        for layer in self.iter() {
+            for row in layer {
+                for point in row {
+                    if *point == 0 { n_zeros += 1 }
+                }
+            }
+        }
+        n_zeros
+    }
+
     pub fn print(&self) {
         println!("{self:?}")
     }

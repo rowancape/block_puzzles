@@ -1,10 +1,12 @@
 mod common;
 mod generator;
 mod solver;
+mod dlx;
 
 use common::*;
 use generator::*;
 use solver::*;
+use dlx::*;
 use std::time::Instant;
 
 fn main() {
@@ -51,9 +53,13 @@ fn main() {
 
     let blocks = vec![block1, block2, block3, block4];
 
+    let dlx = DLX::new(field, blocks);
+    dlx.print_data();
+
     // let mut generator = Generator::new(&field, 4, 5);
     // let blocks = generator.generate_blocks();
 
+    /*
     let mut solver = Solver::new(field, blocks);
 
     match solver.solve() {
@@ -98,4 +104,5 @@ fn main() {
             println!("Number of block rotation state combinations tested: {}", solver.rotational_combinations_tested);
         }
     }
+    */
 }

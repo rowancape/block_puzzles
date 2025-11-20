@@ -44,7 +44,7 @@ impl Generator {
                     None => panic!("No viable coordinates left!"),
                 };
     
-                self.place_block_cell(&mut field_block, coord);
+                self.place_block_cell(&mut field_block, &coord);
                 active_coord = coord;
     
                 let new_coords = self.get_unvisited_neighbors(active_coord, &viable_coords);
@@ -54,7 +54,7 @@ impl Generator {
     
             // Place the final piece
             if let Some(final_coord) = pop_random(&mut viable_coords) {
-                self.place_block_cell(&mut field_block, final_coord);
+                self.place_block_cell(&mut field_block, &final_coord);
             } else {
                 panic!("No viable coordinates left for final placement!");
             }
@@ -171,20 +171,20 @@ impl Generator {
         let mut visited = HashSet::new();
         let mut queue = VecDeque::new();
     
-        queue.push_back(start);
+        queue.push_back(start.clone());
         visited.insert(start);
     
         while let Some(coord) = queue.pop_front() {
             for axis in 0..3 {
                 for dir in [-1, 1] {
-                    let mut neighbor = coord;
+                    let mut neighbor = coord.clone();
                     let neighbor_i = coord[axis] as isize + dir;
     
                     if neighbor_i >= 0 && neighbor_i < self.field.len_by_i(axis) as isize {
                         neighbor[axis] = neighbor_i as usize;
     
                         if self.field[neighbor.z][neighbor.y][neighbor.x] == 0 && !visited.contains(&neighbor) {
-                            visited.insert(neighbor);
+                            visited.insert(neighbor.clone());
                             queue.push_back(neighbor);
                         }
                     }
@@ -195,7 +195,7 @@ impl Generator {
         visited.len()
     }
 
-    fn place_block_cell(&mut self, grid: &mut Grid, coord: Coordinate) {
+    fn place_block_cell(&mut self, grid: &mut Grid, coord: &Coordinate) {
         grid[coord.z][coord.y][coord.x] = 1;
         self.field[coord.z][coord.y][coord.x] = 1;
     }

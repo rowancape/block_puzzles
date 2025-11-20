@@ -55,6 +55,7 @@ impl Solver {
     ///   since the problem is NP-complete.
     /// 
     /// The fastest method would be using a method called "dancing links" and an algorithm called "algorithm x"
+    ///   together simply known as DLX
     pub fn solve(&mut self) -> Option<(Vec<Block>, Vec<Coordinate>)> {
         while self.rotators.last().unwrap().axis_rot_state != [3, 3, 3]  {
     
@@ -111,7 +112,7 @@ impl Solver {
         let mut single_block_coords: Vec<Coordinate> = Vec::new();
 
         let field_dimensions = self.field.dimensions();
-        let block_dimensions = block.dimensions;
+        let block_dimensions = &block.dimensions;
             
         for z in 0..field_dimensions.z {
             // If block can't fit in the z axis, break.
@@ -148,8 +149,8 @@ impl Solver {
         let mut valid_coords: Vec<Coordinate> = Vec::new();
 
         for candidate in candidates {
-            if !self.does_candidate_overlap_field(candidate, block) {
-                valid_coords.push(candidate);
+            if !self.does_candidate_overlap_field(&candidate, block) {
+                valid_coords.push(candidate.clone());
             }
         }
 
@@ -160,7 +161,7 @@ impl Solver {
     ///   at a certain candidate starting coordinate would cause overlap with the field itself.
     /// 
     /// Returns true if overlap happens, and false if not.
-    fn does_candidate_overlap_field(&self, candidate: Coordinate, block: &Block) -> bool {
+    fn does_candidate_overlap_field(&self, candidate: &Coordinate, block: &Block) -> bool {
         for coord in block.iter() {
             if self.field[candidate.z + coord.z][candidate.y + coord.y][candidate.x + coord.x] >= 1 {
                 return true
