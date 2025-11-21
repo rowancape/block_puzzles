@@ -11,6 +11,8 @@ pub struct DLX {
     n_cols: usize,
     // n_nodes_in_col[i] contains the # of nodes in column with index i. 
     n_nodes_in_col: Vec<usize>,
+    // number of blocks
+    n_blocks: usize,
     // row[i]/col[i] contains the row/col that the node of index i is in.
     row: Vec<usize>,
     col: Vec<usize>,
@@ -19,6 +21,10 @@ pub struct DLX {
     right: Vec<usize>,
     up: Vec<usize>,
     down: Vec<usize>,
+    // Saves a partial or singular complete solution's nodes, one node from each row of the solution.
+    one_solution_row_nodes: Vec<usize>,
+    // Each solution saved as a list of rows where each row is a list of columns that rows nodes touch.
+    solutions: Vec<Vec<Vec<usize>>>
 }
 
 pub struct DlxRow {
@@ -124,7 +130,7 @@ impl DLX {
                 left[current_node] = current_node - 1;
 
                 // If last node in row
-                if i != unprocessed_row.cells_filled.len() - 1 {
+                if i == unprocessed_row.cells_filled.len() - 1 {
                     right[current_node] = current_node - unprocessed_row.cells_filled.len();
                 } else {
                     right[current_node] = current_node + 1;
@@ -159,34 +165,154 @@ impl DLX {
             n_rows,
             n_cols,
             n_nodes_in_col,
+            n_blocks,
             row,
             col,
             left,
             right,
             up,
-            down
+            down,
+            one_solution_row_nodes: Vec::new(),
+            solutions: Vec::new()
         }
     }
 
-    pub fn print_data(&self) {
-        println!("\nNUMBER OF NODES IN SPARSE MATRIX: {}\n", self.n_nodes);
+    pub fn search(&mut self) -> Vec<Vec<Vec<usize>>> {
+        self.search_recursive();
+        self.solutions.clone()
+    }
 
-        for i in 0..self.n_cols {
-            println!("NODES IN COL {i}: {}\n", self.n_nodes_in_col[i]);
+    fn search_recursive(&mut self) {
+        // If root node links directly back to itself all column headers have been covered
+        // If all column headers have been covered, a correct solution has been found.
+        if self.root == self.right[self.root] {
+            self.save_solution();
+            return;
         }
-        println!("NUMBER OF ROWS: {}\n", self.n_rows);
-        println!("RIGHT OF ROOT (0): {}", self.right[0]);
-        println!("DOWN OF FIRST FIELD CELL COL: {}", self.down[5]);
 
-        println!("WHAT IS BELOW 25: {}", self.down[25]);
-
-        let col_header = 2;
-        let mut curr_node_in_col = self.down[col_header];
+        let header_node = self.header_col_least_nodes();
         
-        while col_header != curr_node_in_col {
-            println!("NODE: {}, ROW: {}", curr_node_in_col, self.row[curr_node_in_col]);
-            curr_node_in_col = self.down[curr_node_in_col];
+        self.cover(header_node);
+
+        let mut i = self.down[header_node];
+        while i != header_node {
+
+            self.one_solution_row_nodes.push(i);
+
+            let mut j = self.right[i];
+            while j != i {
+                self.cover(j);
+                j = self.right[j];
+            }
+
+            self.search();
+
+            self.one_solution_row_nodes.pop();
+
+            j = self.left[i];
+            while j != i {
+                self.uncover(j);
+                j = self.left[j]
+            }
+
+            i = self.down[i];
         }
+
+        self.uncover(header_node);
+    }
+
+    fn save_solution(&mut self) {
+        let block_cols: Vec<usize> = (0..self.n_blocks).collect();
+        let mut solution = Vec::new();
+
+        for rand_row_node in self.one_solution_row_nodes.iter() {
+            let mut row_touched_cols = Vec::new();
+
+            let mut i = self.right[*rand_row_node];
+            // We do this to make i the node that is in one of the block cols so we can start from that.
+            while !block_cols.contains(&self.col[i]) {
+                i = self.right[i];
+            }
+
+            let left_start = self.left[i];
+            while i != left_start {
+                row_touched_cols.push(self.col[i]);
+                i = self.right[i];
+            }
+            row_touched_cols.push(self.col[i]);
+
+            solution.push(row_touched_cols);
+        }
+
+        self.solutions.push(solution);
+    }
+
+    fn cover(&mut self, node: usize) {
+        // Get the header node of the column node is in.
+        let col_header = self.col[node] + 1;
+
+        // Covering column header node
+        self.right[self.left[col_header]] = self.right[col_header];
+        self.left[self.right[col_header]] = self.left[col_header];
+
+        let mut i = self.down[col_header];
+        while i != col_header {
+            let mut j = self.right[i];
+            while j != i {
+                self.down[self.up[j]] = self.down[j];
+                self.up[self.down[j]] = self.up[j];
+
+                if self.n_nodes_in_col[self.col[j]] > 0 {
+                    self.n_nodes_in_col[self.col[j]] -= 1;
+                }
+
+                j = self.right[j];
+            }
+
+            i = self.down[i];
+        }
+    }
+
+    fn uncover(&mut self, node: usize) {
+        // Get the header node of the column node is in.
+        let col_header = self.col[node] + 1;
+
+        let mut i = self.up[col_header];
+        while i != col_header {
+            let mut j = self.left[i];
+            while j != i {
+                self.down[self.up[j]] = j;
+                self.up[self.down[j]] = j;
+
+                self.n_nodes_in_col[self.col[j]] += 1;
+
+                j = self.left[j];
+            }
+
+            i = self.up[i];
+        }
+
+        // Uncovering column header node
+        self.right[self.left[col_header]] = col_header;
+        self.left[self.right[col_header]] = col_header;
+    }
+
+    fn header_col_least_nodes(&self) -> usize {
+        let mut min = usize::MAX;
+        let mut col_least_nodes: usize = 0;
+
+        let mut header_node = self.right[self.root];
+        while header_node != self.root {
+            let n_nodes = self.n_nodes_in_col[header_node - 1];
+            if n_nodes < min { 
+                min = n_nodes;
+                col_least_nodes = header_node;
+            }
+
+            header_node = self.right[header_node];
+        }
+
+        col_least_nodes
     }
 
     fn is_start_coord_valid(field: &Field, block: &Vec<Coordinate>, sc: &Coordinate) -> bool {

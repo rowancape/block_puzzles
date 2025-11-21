@@ -53,8 +53,14 @@ fn main() {
 
     let blocks = vec![block1, block2, block3, block4];
 
-    let dlx = DLX::new(field, blocks);
-    dlx.print_data();
+    let mut dlx = DLX::new(field, blocks);
+    let solutions = dlx.search();
+
+    println!("TIME: {:?}", start_time.elapsed());
+
+    for solution in solutions {
+        println!("\n{:?}", solution);
+    }
 
     // let mut generator = Generator::new(&field, 4, 5);
     // let blocks = generator.generate_blocks();

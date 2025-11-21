@@ -73,7 +73,16 @@ impl Rotator {
     }
 
     pub fn is_current_rot_unique(&self) -> bool {
-        !self.previous_rotations.contains(&self.block)
+        for prev_rot in &self.previous_rotations {
+            let mut identical = true;
+            for coord in &prev_rot.body {
+                if !self.block.body.contains(&coord) {
+                    identical = false;
+                }
+            }
+            if identical { return false }
+        }
+        true
     }
 }
 
