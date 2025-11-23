@@ -10,3 +10,5 @@ The latest thing I wrote is the first thing in this repository that I have based
 The performance of this based on very small initial testing is about 200 times faster than my own solver, as it does not require the copying of any data during the solve nor precomputing massive test tables of every possible combination.\
 
 ## NOTE! solver::Solver and generator::Generators functionality may be currently broken as the common struct implementations were modified during the writing of dlx::DLX
+
+## NOTE 2! The code in dlx::DLX::new() is currently absolutely horrendous and unreadable, and will likely be cleaned up into proper methods later :P
