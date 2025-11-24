@@ -35,7 +35,7 @@ pub struct DlxRow {
 
 #[allow(dead_code)]
 impl DLX {
-    pub fn new(field: Field, blocks: Vec<Block>) -> DLX {
+    pub fn new(field: &Field, blocks: Vec<Block>) -> DLX {
         let n_blocks = blocks.len();
         let rotators: Vec<Rotator> = blocks.into_iter().map(|block| Rotator::new(block)).collect();
         let mut dlx_rows: Vec<DlxRow> = Vec::new();
