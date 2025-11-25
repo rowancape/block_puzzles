@@ -1,11 +1,9 @@
 mod common;
 mod generator;
-mod solver;
 mod dlx;
 
 use common::*;
 use generator::*;
-use solver::*;
 use dlx::*;
 use std::time::Instant;
 
@@ -54,38 +52,11 @@ fn main() {
     let blocks = vec![block1, block2, block3, block4];
 
     let mut dlx = DLX::new(&field, blocks);
-    let solutions = dlx.search();
+    dlx.search();
 
     println!("TIME: {:?}", start_time.elapsed());
-
-    for (sol_i, solution) in solutions.iter().enumerate() {
-        println!("\n");
-        print!("SOLUTION {}", sol_i + 1);
-
-        let mut solution_field = 
-            vec![vec![vec!["⬛"; field.len_x()] ; field.len_y()] ; field.len_z()];
-
-        let colors = ["🟦", "🟥", "🟨", "🟩"];
-
-        for block in solution {
-            let mut nth_free_cell = 4;
-
-            for (z, layer) in field.iter().enumerate() {
-                for (y, row) in layer.iter().enumerate() {
-                    for (x, point) in row.iter().enumerate() {
-                        if *point == 1 { continue }
-                        if block.contains(&nth_free_cell) {
-                            solution_field[z][y][x] = colors[block[0]];
-                        }
-
-                        nth_free_cell += 1;
-                    }
-                }
-            }
-        }
-
-        print_solution(solution_field);
-    }
+    
+    dlx.print_solutions();
 
     // let mut generator = Generator::new(&field, 4, 5);
     // let blocks = generator.generate_blocks();

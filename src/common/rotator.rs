@@ -16,8 +16,19 @@ impl Rotator {
             previous_rotations: AHashSet::new()
         }
     }
+
+    pub fn rotate(&mut self) {
+        for i in 0..3 {
+            if self.axis_rot_state[i] == 3 {
+                self.rotate_by_i(i);
+            } else {
+                self.rotate_by_i(i);
+                break;
+            }
+        }
+    }
  
-    pub fn rotate_by_i(&mut self, i: usize) {
+    fn rotate_by_i(&mut self, i: usize) {
         if !self.previous_rotations.contains(&self.block) {
             self.previous_rotations.insert(self.block.clone());
         }

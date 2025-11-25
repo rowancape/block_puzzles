@@ -24,11 +24,13 @@ pub struct DLX {
     // Saves a partial or singular complete solution's nodes, one node from each row of the solution.
     one_solution_row_nodes: Vec<usize>,
     // Each solution saved as a list of rows where each row is a list of columns that rows nodes touch.
-    solutions: Vec<Vec<Vec<usize>>>
+    solutions: Vec<Vec<Vec<usize>>>,
+    
+    field: Field,
 }
 
 pub struct DlxRow {
-    cells_filled: Vec<usize>,
+    filled_cells: Vec<usize>,
     block_index: usize
 }
 
@@ -37,92 +39,73 @@ pub struct DlxRow {
 impl DLX {
     pub fn new(field: &Field, blocks: Vec<Block>) -> DLX {
         let n_blocks = blocks.len();
-        let rotators: Vec<Rotator> = blocks.into_iter().map(|block| Rotator::new(block)).collect();
-        let mut dlx_rows: Vec<DlxRow> = Vec::new();
-
-        let mut n_rows = 1;
         let n_cols = field.get_n_field_zeros() + n_blocks;
-        // Number of nodes is set to n_cols for header row and root node (+ 1)
+        let mut n_rows = 1;
         let mut n_nodes = n_cols + 1;
-        let mut n_nodes_in_col: Vec<usize> = vec![0; n_cols];
-        
-        // For each block
-        for (rot_i, mut rotator) in rotators.into_iter().enumerate() {
-            // While the block hasn't been rotated every possible way yet
-            while rotator.axis_rot_state != [3, 3, 3] {
-                // Rotate to the next potentially unique rotation
-                for i in 0..3 {
-                    if rotator.axis_rot_state[i] == 3 {
-                        rotator.rotate_by_i(i);
-                        continue;
-                    }
-                    else {
-                        rotator.rotate_by_i(i);
-                        break;
-                    }
-                }
-                // If it's not unique, go to the next iteration of the while loop
-                if !rotator.is_current_rot_unique() {
-                    continue;
-                }
 
-                let start_coords = Self::starting_positions(&field, &rotator.block);
-                let mut valid_coords = Vec::new();
+        let mut dlx_rows: Vec<DlxRow> = Vec::new();
+        let mut dlx_cols: Vec<Vec<usize>> = vec![vec![]; n_cols];
 
-                for sc in start_coords {
-                    if Self::is_start_coord_valid(&field, &rotator.block.body, &sc) {
-                        valid_coords.push(sc);
-                    }
-                }
+        let rotators: Vec<Rotator> = blocks.into_iter().map(|block| Rotator::new(block)).collect();
 
-                n_rows += valid_coords.len();
+        for (rot_i, rotator) in rotators.into_iter().enumerate() {
+
+            for rotated_block in Self::unique_rotations(rotator) {
+
+                let valid_coords = Self::start_coord_candidates(&field, &rotated_block)
+                    .into_iter()
+                    .filter(|sc| Self::is_start_coord_valid(&field, &rotated_block, sc))
+                    .collect::<Vec<Coordinate>>();
+
                 for sc in valid_coords {
-                    let filled_cells = Self::which_cells_filled(&field, &rotator.block.body, &sc);
+                    let filled_cells = Self::which_cells_filled(&field, &rotated_block, &sc);
+                    
+                    n_rows += 1;
                     n_nodes += filled_cells.len() + 1;
-                    dlx_rows.push(DlxRow { cells_filled: filled_cells, block_index: rot_i });
+                    
+                    dlx_rows.push(DlxRow { block_index: rot_i, filled_cells });
                 }
             }
         }
 
-        let mut dlx_cols: Vec<Vec<usize>> = vec![vec![]; n_cols];
+        let root = n_cols;
+        let mut row = vec![0; n_nodes];
+        let mut col = vec![0; n_nodes];
+        let mut left = vec![0; n_nodes];
+        let mut right = vec![0; n_nodes];
+        let mut up = vec![0; n_nodes];
+        let mut down = vec![0; n_nodes];
+        let mut n_nodes_in_col = vec![0; n_cols];
 
-        let mut left: Vec<usize> = vec![0; n_nodes];
-        let mut right: Vec<usize> = vec![0; n_nodes];
-        let mut up: Vec<usize> = vec![0; n_nodes];
-        let mut down: Vec<usize> = vec![0; n_nodes];
-        let mut row: Vec<usize> = vec![0; n_nodes];
-        let mut col: Vec<usize> = vec![0; n_nodes];
+        // Link the root node.
+        left[root] = n_cols - 1;
+        right[root] = 0;
 
-        let root: usize = 0;
-        left[root] = n_cols;
-        right[root] = 1;
-
-        for header_node in 1..=n_cols {
-            dlx_cols[header_node - 1].push(header_node);
-            col[header_node] = header_node - 1;
-            row[header_node] = 0;
-
-            left[header_node] = header_node - 1;
-            
-            // If last header node
-            if header_node == n_cols {
-                right[root];
+        // The rest of the header row.
+        for header_node in 0..n_cols {
+            if header_node == 0 {
+                left[header_node] = root;
             } else {
-                right[header_node] = header_node + 1;
+                left[header_node] = header_node - 1;
             }
+            right[header_node] = header_node + 1;
+
+            dlx_cols[header_node].push(header_node);
+            col[header_node] = header_node;
+            row[header_node] = 0;
         }
 
         let mut current_node = n_cols + 1;
         for (row_i, unprocessed_row) in dlx_rows.iter().enumerate() {
             row[current_node] = row_i + 1;
             col[current_node] = unprocessed_row.block_index;
-            left[current_node] = unprocessed_row.cells_filled.len() + current_node;
+            left[current_node] = unprocessed_row.filled_cells.len() + current_node;
             right[current_node] = current_node + 1;
             dlx_cols[unprocessed_row.block_index].push(current_node);
             
             current_node += 1;
             
-            for (i, nth_field_cell) in unprocessed_row.cells_filled.iter().enumerate() {
+            for (i, nth_field_cell) in unprocessed_row.filled_cells.iter().enumerate() {
                 let true_col = n_blocks + nth_field_cell;
                 row[current_node] = row_i + 1;
                 col[current_node] = true_col;
@@ -130,8 +113,8 @@ impl DLX {
                 left[current_node] = current_node - 1;
 
                 // If last node in row
-                if i == unprocessed_row.cells_filled.len() - 1 {
-                    right[current_node] = current_node - unprocessed_row.cells_filled.len();
+                if i == unprocessed_row.filled_cells.len() - 1 {
+                    right[current_node] = current_node - unprocessed_row.filled_cells.len();
                 } else {
                     right[current_node] = current_node + 1;
                 }
@@ -173,16 +156,24 @@ impl DLX {
             up,
             down,
             one_solution_row_nodes: Vec::new(),
-            solutions: Vec::new()
+            solutions: Vec::new(),
+            field: field.clone(),
         }
     }
 
-    pub fn search(&mut self) -> Vec<Vec<Vec<usize>>> {
-        self.search_recursive();
-        self.solutions.clone()
+    pub fn print_data(&self) {
+        println!("Root: {}", self.root);
+
+        let mut h = self.right[self.root];
+        while h != self.root {
+            println!("Header node: {h}");
+            h = self.right[h];
+        }
+
+        println!("First node: {}", self.down[0])
     }
 
-    fn search_recursive(&mut self) {
+    pub fn search(&mut self) {
         // If root node links directly back to itself all column headers have been covered
         // If all column headers have been covered, a correct solution has been found.
         if self.root == self.right[self.root] {
@@ -247,9 +238,40 @@ impl DLX {
         self.solutions.push(solution);
     }
 
+    pub fn print_solutions(&self) {
+        for (sol_i, solution) in self.solutions.iter().enumerate() {
+            println!("\n");
+            print!("SOLUTION {}", sol_i + 1);
+
+            let mut solution_field = 
+                vec![vec![vec!["⬛"; self.field.len_x()] ; self.field.len_y()] ; self.field.len_z()];
+
+            let colors = ["🟦", "🟥", "🟨", "🟩"];
+
+            for block in solution {
+                let mut nth_free_cell = 4;
+
+                for (z, layer) in self.field.iter().enumerate() {
+                    for (y, row) in layer.iter().enumerate() {
+                        for (x, point) in row.iter().enumerate() {
+                            if *point == 1 { continue }
+                            if block.contains(&nth_free_cell) {
+                                solution_field[z][y][x] = colors[block[0]];
+                            }
+
+                            nth_free_cell += 1;
+                        }
+                    }
+                }
+            }
+
+            helpers::print_solution(solution_field);
+        }
+    }
+
     fn cover(&mut self, node: usize) {
         // Get the header node of the column node is in.
-        let col_header = self.col[node] + 1;
+        let col_header = self.col[node];
 
         // Covering column header node
         self.right[self.left[col_header]] = self.right[col_header];
@@ -275,7 +297,7 @@ impl DLX {
 
     fn uncover(&mut self, node: usize) {
         // Get the header node of the column node is in.
-        let col_header = self.col[node] + 1;
+        let col_header = self.col[node];
 
         let mut i = self.up[col_header];
         while i != col_header {
@@ -303,7 +325,7 @@ impl DLX {
 
         let mut header_node = self.right[self.root];
         while header_node != self.root {
-            let n_nodes = self.n_nodes_in_col[header_node - 1];
+            let n_nodes = self.n_nodes_in_col[header_node];
             if n_nodes < min { 
                 min = n_nodes;
                 col_least_nodes = header_node;
@@ -315,9 +337,25 @@ impl DLX {
         col_least_nodes
     }
 
-    fn is_start_coord_valid(field: &Field, block: &Vec<Coordinate>, sc: &Coordinate) -> bool {
+    fn unique_rotations(mut rot: Rotator) -> impl Iterator<Item = Block> {
+        std::iter::from_fn(move || {
+            loop {
+                if rot.axis_rot_state == [3, 3, 3] {
+                    return None;
+                }
+
+                rot.rotate();
+
+                if rot.is_current_rot_unique() {
+                    return Some(rot.block.clone())
+                }
+            }
+        })
+    }
+
+    fn is_start_coord_valid(field: &Field, block: &Block, sc: &Coordinate) -> bool {
         
-        for bc in block {
+        for bc in block.iter() {
             if field[sc.z+bc.z][sc.y+bc.y][sc.x+bc.x] == 1 {
                 return false;
             }
@@ -326,7 +364,8 @@ impl DLX {
         true
     }
 
-    fn which_cells_filled(field: &Field, block: &Vec<Coordinate>, sc: &Coordinate) -> Vec<usize> {
+    /// Returns the indexes of the free field cells which are filled by a block placed from a start coordinate.
+    fn which_cells_filled(field: &Field, block: &Block, sc: &Coordinate) -> Vec<usize> {
         let mut cells_filled = Vec::new();
         let mut cell_count: usize = 0;
 
@@ -349,30 +388,21 @@ impl DLX {
         cells_filled
     }
 
-    fn starting_positions(field: &Field, block: &Block) -> Vec<Coordinate> {
+    fn start_coord_candidates(field: &Field, block: &Block) -> Vec<Coordinate> {
         let mut result: Vec<Coordinate> = Vec::new();
 
         let field_dimensions = field.dimensions();
         let block_dimensions = &block.dimensions;
             
         for z in 0..field_dimensions.z {
-            // If block can't fit in the z axis, break.
-            if field_dimensions.z - z < block_dimensions.z {
-                break;
-            }
+            if field_dimensions.z - z < block_dimensions.z { break }
 
             for y in 0..field_dimensions.y {
-                // If block can't fit in the y axis, break.
-                if field_dimensions.y - y < block_dimensions.y {
-                    break;
-                }
+                if field_dimensions.y - y < block_dimensions.y { break }
 
                 for x in 0..field_dimensions.x {
-                    // If block can't fit in the x axis, break.
-                    if field_dimensions.x - x < block_dimensions.x {
-                        break;
-                    }
-                    // If block fits at start coordinate [x, y, z] in all axis then save that coord.
+                    if field_dimensions.x - x < block_dimensions.x { break }
+
                     result.push(Coordinate::new(x, y, z));
                 }
             }
@@ -388,24 +418,16 @@ mod tests {
 
     #[test]
     fn test_which_cells_filled_basic() {
-        // 3×3×1 field with some filled cells
-        // Layer 0:
-        // 0 1 0
-        // 0 0 0
-        // 1 0 0
         let field = Field::new(vec![vec![
             vec![0, 1, 0],
             vec![0, 0, 0],
             vec![1, 0, 0]]]
         );
 
-        // Block: 2×2 square (relative coords)
-        let block = vec![
-            Coordinate::new(0, 0, 0),
-            Coordinate::new(1, 0, 0),
-            Coordinate::new(0, 1, 0),
-            Coordinate::new(1, 1, 0),
-        ];
+        let block = Block::new(vec![vec![
+            vec![1, 1],
+            vec![1, 1]
+        ]]);
 
         // Place block at start coordinate (1, 1, 0)
         let start = Coordinate::new(1, 1, 0);
@@ -496,7 +518,7 @@ mod tests {
     }
 
     #[test]
-    fn test_starting_positions() {
+    fn test_start_coord_candidates() {
         let field = Field::new(vec![vec![
             vec![1, 0],
             vec![0, 0]]; 2]
@@ -509,14 +531,14 @@ mod tests {
 
         let start1 = Coordinate::new(0, 0, 0);
 
-        let calculated_coords = DLX::starting_positions(&field, &block);
+        let calculated_coords = DLX::start_coord_candidates(&field, &block);
 
         assert_eq!(calculated_coords[0], start1);
         assert_eq!(calculated_coords.len(), 1);
     }
 
     #[test]
-    fn test_starting_positions_multiple() {
+    fn test_start_coord_candidates_multiple() {
         let field = Field::new(vec![vec![
             vec![1, 0, 1],
             vec![0, 0, 0],
@@ -543,7 +565,7 @@ mod tests {
             Coordinate::new(2, 1, 1),
         ];
 
-        let calculated_coords = DLX::starting_positions(&field, &block);
+        let calculated_coords = DLX::start_coord_candidates(&field, &block);
 
         assert_eq!(expected_coords.len(), calculated_coords.len());
 
