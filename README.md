@@ -125,13 +125,13 @@ The project is intentionally modular, allowing different solvers or generators t
 ##  Why This Project Matters
 
 This repository demonstrates:
-- Mastery of **advanced algorithms and data structures**
+- Knowledge of **advanced algorithms and data structures**
 - Comfort with **NP-complete problems**
-- Ability to implement **theoretical research algorithms** and *develop* **original solutions** from first-principles
-- Strong understanding of **performance-oriented Rust**
+- Ability to develop **original solutions** from first-principles and implement **gold-standard research-based algorithms**
+- Decent understanding of **performance-oriented Rust**
 - Persistence in iterative optimization and refactoring
 
-It reflects real-world problem solving: starting from brute force, discovering bottlenecks, inventing optimizations, and ultimately implementing a state-of-the-art solution.
+It reflects real-world problem solving: starting from brute force, discovering bottlenecks, inventing optimizations, and ultimately researching and implementing a state-of-the-art solution.
 
 ---
 
