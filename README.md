@@ -80,7 +80,7 @@ While theoretically exponential, it performs surprisingly well due to aggressive
 - Rotation group enumeration
 - Constraint propagation through partial state validation
 
-This solver demonstrates strong algorithmic intuition and the ability to independently rediscover known optimization patterns through experimentation and profiling.
+This is the latest version of the very first program that started the entire project. It went through an iterative development process that began with a simple Python prototype and evolved through multiple Rust rewrites. Each iteration focused on improving clarity, performance, and architectural structure, with successive optimizations informed by profiling, refactoring, and growing problem understanding.
 
 ---
 
@@ -138,14 +138,14 @@ It reflects real-world problem solving: starting from brute force, discovering b
 ##  Future Work
 
 - Cleaning up the code (I was fairly new to idiomatic Rust at the time of writing, and optimized for development speed instead of idiomatic code. I could significantly improve the code with what I've learned since).
-- Parallelized DLX search
+- Parallelized DLX search (Would be really cool to learn more about threads in Rust!)
 - Heuristic-driven block ordering
 - Difficulty metrics for generated puzzles
-- Visualization tooling
+- Visualization tooling (I've already played around with this using Tauri and ThreeJS)
 - SAT / SMT solver comparison
 
 ---
 
 ##  Notes
 
-This project was built as a learning exercise in algorithmic problem solving, low-level optimization, and 3D computational geometry, algorithm-heavy systems work, constraint solving and performance-critical Rust. No external solver libraries were used.
+This project was built as a learning exercise in algorithmic problem solving, low-level optimization, 3D computational geometry, algorithm-heavy systems work, constraint solving and performance-critical Rust. No external solver libraries were used.
