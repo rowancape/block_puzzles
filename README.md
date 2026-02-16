@@ -108,7 +108,7 @@ The generator ensures that produced puzzles are both solvable and structurally i
 
 ---
 
-## 🛠 Architecture Overview
+##  Architecture Overview
 
 - **Field abstraction** for 3D grid operations
 - **Rotator system** for enumerating unique block orientations
