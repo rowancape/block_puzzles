@@ -1,3 +1,5 @@
+# ⚠️ NOTE: The original brute-force solver may be broken at the moment due to changes made to common types during the DLX-solver development!
+
 # 3D Exact Cover Solver & Generator (Rust)
 
 A high-performance **3D exact cover puzzle solver and generator** written in **Rust**, featuring both a state-of-the-art research-based solver (**Dancing Links / Algorithm X**) and a fully original brute-force solver developed independently from first principles.
